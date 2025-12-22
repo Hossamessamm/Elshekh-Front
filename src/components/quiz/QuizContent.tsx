@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { QuizQuestion } from '../../hooks/useCourseApi';
 import { submitQuizResult } from '../../services/courseService';
+import { BASE_URL } from '../../apiConfig';
 
 interface QuizContentProps {
   questions: QuizQuestion[];
@@ -8,9 +9,10 @@ interface QuizContentProps {
   hasNextLesson?: boolean;
   onMoveToNextLesson?: () => void;
   lessonId: number;
+  isQuizSubmitted?: boolean | null;
 }
 
-export const QuizContent: React.FC<QuizContentProps> = ({ questions, onComplete, hasNextLesson = false, onMoveToNextLesson, lessonId }) => {
+export const QuizContent: React.FC<QuizContentProps> = ({ questions, onComplete, hasNextLesson = false, onMoveToNextLesson, lessonId, isQuizSubmitted = false }) => {
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [selectedAnswers, setSelectedAnswers] = useState<number[]>([]);
   const [showResults, setShowResults] = useState(false);
@@ -81,6 +83,31 @@ export const QuizContent: React.FC<QuizContentProps> = ({ questions, onComplete,
     return <div className="text-center text-gray-600">لا توجد أسئلة متاحة</div>;
   }
 
+  // If quiz is already submitted, show a message
+  if (isQuizSubmitted) {
+    return (
+      <div className="quiz-content" dir="rtl">
+        <div className="text-center">
+          <div className="mb-8">
+            <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg className="w-10 h-10 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <h3 className="text-2xl font-bold text-gray-900 mb-2">تم إكمال الاختبار مسبقاً</h3>
+            <p className="text-gray-600 mb-6">لقد قمت بإتمام هذا الاختبار من قبل ولا يمكن إعادته.</p>
+          </div>
+          <button
+            onClick={handleComplete}
+            className="px-6 py-3 rounded-lg font-medium transition-colors bg-primary text-white hover:bg-primary/90"
+          >
+            {hasNextLesson ? 'الانتقال للدرس التالي' : 'العودة للدرس'}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   const question = questions[currentQuestion];
   const score = showResults ? calculateScore() : null;
 
@@ -107,6 +134,20 @@ export const QuizContent: React.FC<QuizContentProps> = ({ questions, onComplete,
 
           <div className="bg-gray-50 rounded-xl p-6">
             <p className="text-lg text-gray-900 mb-6">{question.text}</p>
+            
+            {question.imagePath && (
+              <div className="mb-6 flex justify-center">
+                <img 
+                  src={`${BASE_URL}${question.imagePath}`} 
+                  alt="سؤال" 
+                  className="max-w-full h-auto rounded-lg shadow-md"
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none';
+                  }}
+                />
+              </div>
+            )}
+            
             <div className="space-y-3">
               {question.answers.map((answer, index) => (
                 <button
@@ -185,18 +226,33 @@ export const QuizContent: React.FC<QuizContentProps> = ({ questions, onComplete,
             )}
 
             {!showAnswers ? (
-              <button
-                onClick={handleViewAnswers}
-                className="px-6 py-3 bg-white border border-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors mb-4 w-full max-w-sm mx-auto block"
-              >
-                عرض الإجابات الصحيحة
-              </button>
+              // <button
+              //   onClick={handleViewAnswers}
+              //   className="px-6 py-3 bg-white border border-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors mb-4 w-full max-w-sm mx-auto block"
+              // >
+              //   عرض الإجابات الصحيحة
+              // </button>
+              null
             ) : (
               <div className="max-w-2xl mx-auto mt-8 space-y-6">
                 <h4 className="text-xl font-semibold text-gray-900 mb-4">الإجابات الصحيحة</h4>
                 {questions.map((q, qIndex) => (
                   <div key={qIndex} className="bg-white rounded-xl p-6 shadow-sm">
                     <p className="text-lg text-gray-900 mb-4 font-medium">{q.text}</p>
+                    
+                    {q.imagePath && (
+                      <div className="mb-4 flex justify-center">
+                        <img 
+                          src={`${BASE_URL}${q.imagePath}`} 
+                          alt="سؤال" 
+                          className="max-w-full h-auto rounded-lg shadow-md"
+                          onError={(e) => {
+                            e.currentTarget.style.display = 'none';
+                          }}
+                        />
+                      </div>
+                    )}
+                    
                     <div className="space-y-3">
                       {q.answers.map((answer, aIndex) => (
                         <div

@@ -1452,6 +1452,7 @@ const CourseViewer: React.FC = () => {
                       hasNextLesson={hasNextLesson}
                       onMoveToNextLesson={goToNextLesson}
                       lessonId={selectedLesson.id}
+                      isQuizSubmitted={selectedLesson.isQuizSubmitted}
                     />
                   </div>
                 )}

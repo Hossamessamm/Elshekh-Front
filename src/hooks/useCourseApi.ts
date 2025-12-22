@@ -20,6 +20,7 @@ export interface QuizAnswer {
 
 export interface QuizQuestion {
   text: string;
+  imagePath: string | null;
   type: 'MultipleChoice' | 'TrueFalse';
   answers: QuizAnswer[];
 }
