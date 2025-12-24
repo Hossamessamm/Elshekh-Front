@@ -43,3 +43,28 @@ code {
 .animate-gradient-xy {
   animation: gradient-xy 15s ease infinite;
 }
+
+/* Custom scrollbar styles for quiz navigator */
+.quiz-navigator-scroll::-webkit-scrollbar {
+  height: 6px;
+}
+
+.quiz-navigator-scroll::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 10px;
+}
+
+.quiz-navigator-scroll::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 10px;
+}
+
+.quiz-navigator-scroll::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Firefox scrollbar */
+.quiz-navigator-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 #f1f5f9;
+}

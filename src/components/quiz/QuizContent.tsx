@@ -162,6 +162,22 @@ export const QuizContent: React.FC<QuizContentProps> = ({ questions, onComplete,
     if (!isSelected && isCorrect) return 'border-green-500 bg-green-50 text-green-700';
   };
 
+  // Function to navigate to a specific question
+  const goToQuestion = (questionIndex: number) => {
+    setCurrentQuestion(questionIndex);
+  };
+
+  // Function to get question status for styling
+  const getQuestionStatus = (questionIndex: number) => {
+    if (selectedAnswers[questionIndex] !== undefined) {
+      return 'answered';
+    }
+    if (questionIndex === currentQuestion) {
+      return 'current';
+    }
+    return 'unanswered';
+  };
+
   return (
     <div className="quiz-content" dir="rtl">
       {!showResults ? (
@@ -211,36 +227,118 @@ export const QuizContent: React.FC<QuizContentProps> = ({ questions, onComplete,
             </div>
           </div>
 
+          {/* Question Navigator */}
+          <div className="bg-white rounded-xl p-4 shadow-sm">
+            <h4 className="text-sm font-medium text-gray-700 mb-3">التنقل بين الأسئلة</h4>
+            <div className="relative">
+              <div className="flex items-center gap-2 overflow-x-auto pb-2 quiz-navigator-scroll">
+                {questions.map((_, index) => {
+                  const status = getQuestionStatus(index);
+                  return (
+                    <button
+                      key={index}
+                      onClick={() => goToQuestion(index)}
+                      className={`
+                        flex-shrink-0 w-10 h-10 rounded-lg font-medium text-sm transition-all duration-200
+                        ${status === 'current' 
+                          ? 'bg-primary text-white ring-2 ring-primary ring-offset-2 scale-110 shadow-md' 
+                          : status === 'answered'
+                          ? 'bg-green-100 text-green-700 border-2 border-green-400 hover:bg-green-200'
+                          : 'bg-gray-100 text-gray-600 border-2 border-gray-300 hover:bg-gray-200'
+                        }
+                      `}
+                      title={status === 'answered' ? `السؤال ${index + 1} (تم الإجابة)` : `السؤال ${index + 1}`}
+                    >
+                      {index + 1}
+                    </button>
+                  );
+                })}
+                {/* Ellipsis indicator */}
+                <div className="flex-shrink-0 w-10 h-10 flex items-center justify-center text-gray-400 font-bold text-xl pointer-events-none">
+                  ...
+                </div>
+              </div>
+              {/* Scroll fade indicator on the right (since RTL) */}
+              <div className="absolute right-0 top-0 bottom-2 w-12 bg-gradient-to-r from-transparent to-white pointer-events-none rounded-r-xl"></div>
+            </div>
+            <div className="flex items-center gap-4 mt-4 text-xs text-gray-600 flex-wrap">
+              <div className="flex items-center gap-1">
+                <div className="w-4 h-4 rounded bg-primary"></div>
+                <span>السؤال الحالي</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <div className="w-4 h-4 rounded bg-green-100 border-2 border-green-400"></div>
+                <span>تم الإجابة</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <div className="w-4 h-4 rounded bg-gray-100 border-2 border-gray-300"></div>
+                <span>لم يتم الإجابة</span>
+              </div>
+            </div>
+          </div>
+
           <div className="flex flex-col gap-4">
             {error && (
               <div className="bg-red-50 text-red-700 p-4 rounded-lg">
                 <p className="text-sm">{error}</p>
               </div>
             )}
-            <div className="flex justify-end">
+            
+            {/* Navigation Buttons */}
+            <div className="flex items-center justify-between gap-4">
               <button
-                onClick={handleNext}
-                disabled={selectedAnswers[currentQuestion] === undefined || submitting}
-                className={`px-6 py-3 rounded-lg font-medium transition-colors ${
-                  selectedAnswers[currentQuestion] === undefined || submitting
+                onClick={() => goToQuestion(currentQuestion - 1)}
+                disabled={currentQuestion === 0}
+                className={`flex items-center gap-2 px-6 py-3 rounded-lg font-medium transition-colors ${
+                  currentQuestion === 0
                     ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                    : 'bg-primary text-white hover:bg-primary/90'
+                    : 'bg-white border-2 border-primary text-primary hover:bg-primary hover:text-white'
                 }`}
               >
-                {submitting ? (
-                  <span className="flex items-center gap-2">
-                    <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                    </svg>
-                    جاري الإرسال...
-                  </span>
-                ) : currentQuestion < questions.length - 1 ? (
-                  'السؤال التالي'
-                ) : (
-                  'إنهاء الاختبار'
-                )}
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+                السؤال السابق
               </button>
+
+              {currentQuestion < questions.length - 1 ? (
+                <button
+                  onClick={() => goToQuestion(currentQuestion + 1)}
+                  className="flex items-center gap-2 px-6 py-3 rounded-lg font-medium transition-colors bg-white border-2 border-primary text-primary hover:bg-primary hover:text-white"
+                >
+                  السؤال التالي
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
+              ) : (
+                <button
+                  onClick={handleNext}
+                  disabled={selectedAnswers[currentQuestion] === undefined || submitting}
+                  className={`flex items-center gap-2 px-6 py-3 rounded-lg font-medium transition-colors ${
+                    selectedAnswers[currentQuestion] === undefined || submitting
+                      ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                      : 'bg-primary text-white hover:bg-primary/90'
+                  }`}
+                >
+                  {submitting ? (
+                    <span className="flex items-center gap-2">
+                      <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                      </svg>
+                      جاري الإرسال...
+                    </span>
+                  ) : (
+                    <>
+                      إنهاء الاختبار
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                    </>
+                  )}
+                </button>
+              )}
             </div>
           </div>
         </div>
