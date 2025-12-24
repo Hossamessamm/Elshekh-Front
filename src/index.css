@@ -45,6 +45,11 @@ code {
 }
 
 /* Custom scrollbar styles for quiz navigator */
+.quiz-navigator-scroll {
+  -webkit-overflow-scrolling: touch; /* Smooth momentum scrolling on iOS */
+  scroll-behavior: smooth;
+}
+
 .quiz-navigator-scroll::-webkit-scrollbar {
   height: 6px;
 }
@@ -67,4 +72,11 @@ code {
 .quiz-navigator-scroll {
   scrollbar-width: thin;
   scrollbar-color: #cbd5e1 #f1f5f9;
+}
+
+/* Mobile: Hide scrollbar but keep functionality */
+@media (max-width: 640px) {
+  .quiz-navigator-scroll::-webkit-scrollbar {
+    height: 4px;
+  }
 }

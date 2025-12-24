@@ -178,19 +178,40 @@ export const QuizContent: React.FC<QuizContentProps> = ({ questions, onComplete,
     return 'unanswered';
   };
 
+  // Get visible questions for the navigator (max 5)
+  const getVisibleQuestions = () => {
+    const maxVisible = 5;
+    const totalQuestions = questions.length;
+    
+    if (totalQuestions <= maxVisible) {
+      return questions.map((_, index) => index);
+    }
+    
+    // Always show current question and 2 before and 2 after if possible
+    let start = Math.max(0, currentQuestion - 2);
+    let end = Math.min(totalQuestions, start + maxVisible);
+    
+    // Adjust start if we're near the end
+    if (end - start < maxVisible) {
+      start = Math.max(0, end - maxVisible);
+    }
+    
+    return Array.from({ length: end - start }, (_, i) => start + i);
+  };
+
   return (
     <div className="quiz-content" dir="rtl">
       {!showResults ? (
-        <div className="space-y-6">
-          <div className="flex items-center justify-between">
-            <h3 className="text-xl font-semibold text-gray-900">السؤال {currentQuestion + 1} من {questions.length}</h3>
-            <span className="text-sm text-gray-600">
+        <div className="space-y-4 sm:space-y-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+            <h3 className="text-lg sm:text-xl font-semibold text-gray-900">السؤال {currentQuestion + 1} من {questions.length}</h3>
+            <span className="text-xs sm:text-sm text-gray-600 bg-gray-100 px-3 py-1 rounded-full">
               {Math.round(((currentQuestion + 1) / questions.length) * 100)}% مكتمل
             </span>
           </div>
 
-          <div className="bg-gray-50 rounded-xl p-6">
-            <p className="text-lg text-gray-900 mb-6">{question.text}</p>
+          <div className="bg-gray-50 rounded-xl p-4 sm:p-6">
+            <p className="text-base sm:text-lg text-gray-900 mb-4 sm:mb-6">{question.text}</p>
             
             {question.imagePath && getQuestionImageSrc(question.imagePath) && (
               <div className="mb-6 flex justify-center">
@@ -228,40 +249,41 @@ export const QuizContent: React.FC<QuizContentProps> = ({ questions, onComplete,
           </div>
 
           {/* Question Navigator */}
-          <div className="bg-white rounded-xl p-4 shadow-sm">
-            <h4 className="text-sm font-medium text-gray-700 mb-3">التنقل بين الأسئلة</h4>
-            <div className="relative">
-              <div className="flex items-center gap-2 overflow-x-auto pb-2 quiz-navigator-scroll">
-                {questions.map((_, index) => {
-                  const status = getQuestionStatus(index);
-                  return (
-                    <button
-                      key={index}
-                      onClick={() => goToQuestion(index)}
-                      className={`
-                        flex-shrink-0 w-10 h-10 rounded-lg font-medium text-sm transition-all duration-200
-                        ${status === 'current' 
-                          ? 'bg-primary text-white ring-2 ring-primary ring-offset-2 scale-110 shadow-md' 
-                          : status === 'answered'
-                          ? 'bg-green-100 text-green-700 border-2 border-green-400 hover:bg-green-200'
-                          : 'bg-gray-100 text-gray-600 border-2 border-gray-300 hover:bg-gray-200'
-                        }
-                      `}
-                      title={status === 'answered' ? `السؤال ${index + 1} (تم الإجابة)` : `السؤال ${index + 1}`}
-                    >
-                      {index + 1}
-                    </button>
-                  );
-                })}
-                {/* Ellipsis indicator */}
-                <div className="flex-shrink-0 w-10 h-10 flex items-center justify-center text-gray-400 font-bold text-xl pointer-events-none">
+          <div className="bg-white rounded-xl p-3 sm:p-4 shadow-sm">
+            <h4 className="text-xs sm:text-sm font-medium text-gray-700 mb-2 sm:mb-3">التنقل بين الأسئلة</h4>
+            <div className="flex items-center justify-center gap-2">
+              {getVisibleQuestions().map((index) => {
+                const status = getQuestionStatus(index);
+                return (
+                  <button
+                    key={index}
+                    onClick={() => goToQuestion(index)}
+                    className={`
+                      flex-shrink-0 w-10 h-10 sm:w-12 sm:h-12 rounded-lg font-medium text-sm sm:text-base transition-all duration-200
+                      ${status === 'current' 
+                        ? 'bg-primary text-white ring-2 ring-primary ring-offset-1 sm:ring-offset-2 scale-110 shadow-md' 
+                        : status === 'answered'
+                        ? 'bg-green-100 text-green-700 border-2 border-green-400 hover:bg-green-200 active:scale-95'
+                        : 'bg-gray-100 text-gray-600 border-2 border-gray-300 hover:bg-gray-200 active:scale-95'
+                      }
+                    `}
+                    title={status === 'answered' ? `السؤال ${index + 1} (تم الإجابة)` : `السؤال ${index + 1}`}
+                  >
+                    {index + 1}
+                  </button>
+                );
+              })}
+              
+              {/* Show ellipsis only if there are more questions */}
+              {questions.length > 5 && getVisibleQuestions()[getVisibleQuestions().length - 1] < questions.length - 1 && (
+                <div className="flex-shrink-0 w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center text-gray-400 font-bold text-lg sm:text-xl pointer-events-none">
                   ...
                 </div>
-              </div>
-              {/* Scroll fade indicator on the right (since RTL) */}
-              <div className="absolute right-0 top-0 bottom-2 w-12 bg-gradient-to-r from-transparent to-white pointer-events-none rounded-r-xl"></div>
+              )}
             </div>
-            <div className="flex items-center gap-4 mt-4 text-xs text-gray-600 flex-wrap">
+            
+            {/* Legend - Hide on very small screens, show on SM and up */}
+            <div className="hidden sm:flex items-center gap-3 md:gap-4 mt-4 text-xs text-gray-600 flex-wrap justify-center">
               <div className="flex items-center gap-1">
                 <div className="w-4 h-4 rounded bg-primary"></div>
                 <span>السؤال الحالي</span>
@@ -285,29 +307,31 @@ export const QuizContent: React.FC<QuizContentProps> = ({ questions, onComplete,
             )}
             
             {/* Navigation Buttons */}
-            <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center justify-between gap-2 sm:gap-4">
               <button
                 onClick={() => goToQuestion(currentQuestion - 1)}
                 disabled={currentQuestion === 0}
-                className={`flex items-center gap-2 px-6 py-3 rounded-lg font-medium transition-colors ${
+                className={`flex items-center gap-1 sm:gap-2 px-3 sm:px-6 py-2 sm:py-3 rounded-lg font-medium text-sm sm:text-base transition-colors ${
                   currentQuestion === 0
                     ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                    : 'bg-white border-2 border-primary text-primary hover:bg-primary hover:text-white'
+                    : 'bg-white border-2 border-primary text-primary hover:bg-primary hover:text-white active:scale-95'
                 }`}
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                 </svg>
-                السؤال السابق
+                <span className="hidden sm:inline">السؤال السابق</span>
+                <span className="sm:hidden">السابق</span>
               </button>
 
               {currentQuestion < questions.length - 1 ? (
                 <button
                   onClick={() => goToQuestion(currentQuestion + 1)}
-                  className="flex items-center gap-2 px-6 py-3 rounded-lg font-medium transition-colors bg-white border-2 border-primary text-primary hover:bg-primary hover:text-white"
+                  className="flex items-center gap-1 sm:gap-2 px-3 sm:px-6 py-2 sm:py-3 rounded-lg font-medium text-sm sm:text-base transition-colors bg-white border-2 border-primary text-primary hover:bg-primary hover:text-white active:scale-95"
                 >
-                  السؤال التالي
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <span className="hidden sm:inline">السؤال التالي</span>
+                  <span className="sm:hidden">التالي</span>
+                  <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                   </svg>
                 </button>
@@ -315,24 +339,26 @@ export const QuizContent: React.FC<QuizContentProps> = ({ questions, onComplete,
                 <button
                   onClick={handleNext}
                   disabled={selectedAnswers[currentQuestion] === undefined || submitting}
-                  className={`flex items-center gap-2 px-6 py-3 rounded-lg font-medium transition-colors ${
+                  className={`flex items-center gap-1 sm:gap-2 px-3 sm:px-6 py-2 sm:py-3 rounded-lg font-medium text-sm sm:text-base transition-colors ${
                     selectedAnswers[currentQuestion] === undefined || submitting
                       ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                      : 'bg-primary text-white hover:bg-primary/90'
+                      : 'bg-primary text-white hover:bg-primary/90 active:scale-95'
                   }`}
                 >
                   {submitting ? (
-                    <span className="flex items-center gap-2">
-                      <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                    <span className="flex items-center gap-1 sm:gap-2">
+                      <svg className="animate-spin h-4 w-4 sm:h-5 sm:w-5" viewBox="0 0 24 24">
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                       </svg>
-                      جاري الإرسال...
+                      <span className="hidden sm:inline">جاري الإرسال...</span>
+                      <span className="sm:hidden">إرسال...</span>
                     </span>
                   ) : (
                     <>
-                      إنهاء الاختبار
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <span className="hidden sm:inline">إنهاء الاختبار</span>
+                      <span className="sm:hidden">إنهاء</span>
+                      <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                       </svg>
                     </>
