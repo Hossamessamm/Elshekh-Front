@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { QuizQuestion } from '../../hooks/useCourseApi';
 import { submitQuizResult } from '../../services/courseService';
 import { BASE_URL } from '../../apiConfig';
@@ -19,6 +19,47 @@ export const QuizContent: React.FC<QuizContentProps> = ({ questions, onComplete,
   const [showAnswers, setShowAnswers] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [cacheBuster] = useState(() => new Date().getTime()); // Generate once when component mounts
+
+  // Force hard refresh when quiz component loads
+  useEffect(() => {
+    // Clear any cached quiz images
+    if ('caches' in window) {
+      caches.keys().then(names => {
+        names.forEach(name => {
+          caches.open(name).then(cache => {
+            cache.keys().then(keys => {
+              keys.forEach(key => {
+                if (key.url.includes('quiz') || key.url.includes('imagePath')) {
+                  cache.delete(key);
+                }
+              });
+            });
+          });
+        });
+      });
+    }
+  }, [lessonId]); // Re-run when lesson changes
+
+  // Helper function to construct image URL properly
+  const getQuestionImageSrc = (imagePath: string | null) => {
+    if (!imagePath) return null;
+    
+    // If it's already a full URL, use it as is
+    if (imagePath.startsWith('http')) {
+      return `${imagePath}?t=${cacheBuster}`;
+    }
+    
+    // Handle relative paths - remove leading slash to avoid double slashes
+    let cleanPath = imagePath;
+    if (cleanPath.startsWith('/')) {
+      cleanPath = cleanPath.substring(1);
+    }
+    
+    // Ensure BASE_URL ends with a slash
+    const baseUrl = BASE_URL.endsWith('/') ? BASE_URL : BASE_URL + '/';
+    return `${baseUrl}${cleanPath}?t=${cacheBuster}`;
+  };
 
   const handleAnswerSelect = (answerIndex: number) => {
     setSelectedAnswers(prev => {
@@ -135,13 +176,18 @@ export const QuizContent: React.FC<QuizContentProps> = ({ questions, onComplete,
           <div className="bg-gray-50 rounded-xl p-6">
             <p className="text-lg text-gray-900 mb-6">{question.text}</p>
             
-            {question.imagePath && (
+            {question.imagePath && getQuestionImageSrc(question.imagePath) && (
               <div className="mb-6 flex justify-center">
                 <img 
-                  src={`${BASE_URL}${question.imagePath}`} 
-                  alt="سؤال" 
+                  src={getQuestionImageSrc(question.imagePath)!} 
+                  alt="صورة السؤال" 
                   className="max-w-full h-auto rounded-lg shadow-md"
+                  loading="eager"
+                  crossOrigin="anonymous"
+                  referrerPolicy="no-referrer"
+                  key={`question-${currentQuestion}-${cacheBuster}`}
                   onError={(e) => {
+                    console.error('Failed to load image:', getQuestionImageSrc(question.imagePath));
                     e.currentTarget.style.display = 'none';
                   }}
                 />
@@ -240,13 +286,18 @@ export const QuizContent: React.FC<QuizContentProps> = ({ questions, onComplete,
                   <div key={qIndex} className="bg-white rounded-xl p-6 shadow-sm">
                     <p className="text-lg text-gray-900 mb-4 font-medium">{q.text}</p>
                     
-                    {q.imagePath && (
+                    {q.imagePath && getQuestionImageSrc(q.imagePath) && (
                       <div className="mb-4 flex justify-center">
                         <img 
-                          src={`${BASE_URL}${q.imagePath}`} 
-                          alt="سؤال" 
+                          src={getQuestionImageSrc(q.imagePath)!} 
+                          alt="صورة السؤال" 
                           className="max-w-full h-auto rounded-lg shadow-md"
+                          loading="eager"
+                          crossOrigin="anonymous"
+                          referrerPolicy="no-referrer"
+                          key={`answer-review-${qIndex}-${cacheBuster}`}
                           onError={(e) => {
+                            console.error('Failed to load image:', getQuestionImageSrc(q.imagePath));
                             e.currentTarget.style.display = 'none';
                           }}
                         />
